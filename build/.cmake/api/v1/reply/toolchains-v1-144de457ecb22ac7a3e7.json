@@ -1,0 +1,149 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "NVIDIA",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/11.7/nccl/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/11.7/nvshmem/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/extras/qd/include/qd",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/hcoll/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ompi/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/sharp/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ucx/mt/include",
+						"/usr/local/gdrcopy/include",
+						"/usr/include/c++/11",
+						"/usr/include/x86_64-linux-gnu/c++/11",
+						"/usr/include/c++/11/backward",
+						"/usr/lib/gcc/x86_64-linux-gnu/11/include",
+						"/usr/local/include",
+						"/usr/include/x86_64-linux-gnu",
+						"/usr/include"
+					],
+					"linkDirectories" : 
+					[
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7/lib64",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/11.7/lib64",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/11.7/nccl/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/11.7/nvshmem/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7/targets/x86_64-linux/lib/stubs",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/cuda/11.7/targets/x86_64-linux/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/hcoll/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ompi/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/nccl_rdma_sharp_plugin/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/sharp/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ucx/mt/lib",
+						"/usr/local/gdrcopy/lib",
+						"/usr/lib/gcc/x86_64-linux-gnu/11",
+						"/usr/lib/x86_64-linux-gnu",
+						"/usr/lib",
+						"/lib/x86_64-linux-gnu",
+						"/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"stdc++",
+						"m",
+						"gcc_s",
+						"gcc",
+						"c",
+						"gcc_s",
+						"gcc"
+					]
+				},
+				"path" : "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/bin/nvcc",
+				"version" : "11.7.64"
+			},
+			"language" : "CUDA",
+			"sourceFileExtensions" : 
+			[
+				"cu"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/nvshmem/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/nccl/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/extras/qd/include/qd",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/math_libs/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/hcoll/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ompi/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/sharp/include",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ucx/mt/include",
+						"/usr/local/gdrcopy/include",
+						"/usr/include/c++/11",
+						"/usr/include/x86_64-linux-gnu/c++/11",
+						"/usr/include/c++/11/backward",
+						"/usr/lib/gcc/x86_64-linux-gnu/11/include",
+						"/usr/local/include",
+						"/usr/include/x86_64-linux-gnu",
+						"/usr/include"
+					],
+					"linkDirectories" : 
+					[
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/hcoll/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ompi/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/nccl_rdma_sharp_plugin/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/sharp/lib",
+						"/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/comm_libs/hpcx/latest/ucx/mt/lib",
+						"/usr/local/gdrcopy/lib",
+						"/usr/lib/gcc/x86_64-linux-gnu/11",
+						"/usr/lib/x86_64-linux-gnu",
+						"/usr/lib",
+						"/lib/x86_64-linux-gnu",
+						"/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"stdc++",
+						"m",
+						"gcc_s",
+						"gcc",
+						"c",
+						"gcc_s",
+						"gcc"
+					]
+				},
+				"path" : "/usr/bin/g++",
+				"version" : "11.2.0"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"m",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

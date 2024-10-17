@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/root/workspace/ImageProcessingUsing2DConvolutionCUDA/build",
+  "command": "/opt/nvidia/hpc_sdk/Linux_x86_64/22.7/compilers/bin/nvcc -forward-unknown-to-host-compiler   -g -fopenmp -x cu -c /root/workspace/ImageProcessingUsing2DConvolutionCUDA/main.cu -o CMakeFiles/TEMPALTE.dir/main.cu.o",
+  "file": "/root/workspace/ImageProcessingUsing2DConvolutionCUDA/main.cu"
+}
+]
