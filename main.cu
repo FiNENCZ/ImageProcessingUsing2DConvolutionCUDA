@@ -53,7 +53,7 @@ __global__ void processImg(unsigned char *out,unsigned char *in, size_t pitch, u
         //applying the filter
         for (int r = 0; r < FILTER_SIZE ;++r)
             for (int c = 0; c < FILTER_SIZE ; ++c)
-                sum += sBuffer[threadIdx.y + r][threadIdx.x + c] * gaussianKernel[r][c];
+                sum += sBuffer[threadIdx.y + r][threadIdx.x + c] * gaussianKernel[r][c] * 5;
     
 
     sum = sum / (FILTER_SIZE * FILTER_SIZE);
