@@ -7,7 +7,7 @@
 #include "utils/pngio.h"
 
 #define BLOCK_SIZE (16u)
-#define FILTER_SIZE (3u)
+#define FILTER_SIZE (5u)
 #define TILE_SIZE (BLOCK_SIZE-(FILTER_SIZE-1))
 
 #define CUDA_CHECK_RETURN( value ) {							\
@@ -18,6 +18,13 @@
 		exit( 1 );												\
 	} }
 
+__constant__ float gaussianKernel[5][5] = {
+    {1, 4, 7, 4, 1},
+    {4, 16, 26, 16, 4},
+    {7, 26, 41, 26, 7},
+    {4, 16, 26, 16, 4},
+    {1, 4, 7, 4, 1}
+};
 __global__ void processImg(unsigned char *out,unsigned char *in, size_t pitch, unsigned int width,unsigned int height){
     int x_o = (TILE_SIZE * blockIdx.x) + threadIdx.x;
     int y_o = (TILE_SIZE * blockIdx.y) + threadIdx.y;
@@ -43,7 +50,7 @@ __global__ void processImg(unsigned char *out,unsigned char *in, size_t pitch, u
         //applying the filter
         for (int r = 0; r < FILTER_SIZE ;++r)
             for (int c = 0; c < FILTER_SIZE ; ++c)
-                sum += sBuffer[threadIdx.y + r][threadIdx.x + c];
+                sum += sBuffer[threadIdx.y + r][threadIdx.x + c] * gaussianKernel[r][c];
     
 
     sum = sum / (FILTER_SIZE * FILTER_SIZE);
