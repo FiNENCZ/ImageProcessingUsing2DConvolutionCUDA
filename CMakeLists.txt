@@ -15,6 +15,8 @@ find_package(PNG REQUIRED)
 add_executable(TEMPALTE main.cu pngio.cpp)
 
 list(APPEND CMAKE_CXX_FLAGS "-O2 -ffast-math -Wall ${OpenMP_CXX_FLAGS}")
+list(APPEND CUDA_NVCC_FLAGS "--compiler-options -fno-strict-aliasing -lineinfo -use_fast_math --ptxas-options -dlcm=cg")
+list(APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_35,code=sm_35")
 
 # Přidání kompilátorových možností pro OpenMP
 if(OpenMP_CXX_FOUND)
