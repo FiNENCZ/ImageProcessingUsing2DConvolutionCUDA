@@ -19,11 +19,11 @@
 	} }
 
 __constant__ float gaussianKernel[5][5] = {
-    {1, 4, 25, 4, 1},
-    {4, 50, 100, 50, 4},
-    {25, 100, 150, 50, 25},
-    {4, 50, 100, 50, 4},
-    {1, 4, 25, 4, 1}
+    {1, 4, 7, 4, 1},
+    {4, 16, 26, 16, 4},
+    {7, 26, 41, 26, 7},
+    {4, 16, 26, 16, 4},
+    {1, 4, 7, 4, 1}
 };
 __global__ void processImg(unsigned char *out,unsigned char *in, size_t pitch, unsigned int width,unsigned int height){
     int x_o = (TILE_SIZE * blockIdx.x) + threadIdx.x;
