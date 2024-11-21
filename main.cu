@@ -7,8 +7,8 @@
 #include "utils/pngio.h"
 
 #define BLOCK_SIZE (16u)
-#define FILTER_SIZE (5u)
-#define TILE_SIZE (12u)
+#define FILTER_SIZE (9u)
+#define TILE_SIZE (BLOCK_SIZE-(FILTER_SIZE-1))
 
 #define CUDA_CHECK_RETURN( value ) {							\
 	cudaError_t err = value;									\
@@ -23,8 +23,8 @@ __global__ void processImg(unsigned char *out,unsigned char *in, size_t pitch, u
     int y_o = (TILE_SIZE * blockIdx.y) + threadIdx.y;
 
     //due to 2 pixels will be outside
-    int x_i = x_o - 2;
-    int y_i = y_o - 2;
+    int x_i = x_o - ((FILTER_SIZE-1)/2);
+    int y_i = y_o - ((FILTER_SIZE-1)/2);
 
     //defining shared memory
     __shared__ unsigned char sBuffer[BLOCK_SIZE][BLOCK_SIZE];
