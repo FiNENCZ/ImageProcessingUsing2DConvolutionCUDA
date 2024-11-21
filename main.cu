@@ -7,7 +7,7 @@
 #include "utils/pngio.h"
 
 #define BLOCK_SIZE (16u)
-#define FILTER_SIZE (5u)
+#define FILTER_SIZE (11u)
 #define TILE_SIZE (BLOCK_SIZE-(FILTER_SIZE-1))
 
 #define CUDA_CHECK_RETURN( value ) {							\
