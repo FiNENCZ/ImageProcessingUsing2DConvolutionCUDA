@@ -9,120 +9,111 @@
 
 #define BLOCK_SIZE 16
 
-#define CUDA_CHECK_RETURN( value ) {							\
-	cudaError_t err = value;									\
-	if( err != cudaSuccess ) {									\
-		fprintf( stderr, "Error %s at line %d in file %s\n",	\
-				cudaGetErrorString(err), __LINE__, __FILE__ );	\
-		exit( 1 );												\
-	} }
-
-
-
-__global__ void blurKernel(const unsigned char *input, unsigned char *output, int width, int height, int channels) {
+__global__ void blurKernel(const unsigned char *input, unsigned char *output, int width, int height) {
     // Indexy pixelu
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    // Sdílená paměť
-    __shared__ unsigned char sharedMem[(BLOCK_SIZE + 2) * (BLOCK_SIZE + 2) * 3];
+    // Sdílená paměť pro blok
+    __shared__ unsigned char sharedBlock[BLOCK_SIZE + 2][BLOCK_SIZE + 2][3]; // +2 pro okrajovou část
 
-    int sharedX = threadIdx.x + 1;
-    int sharedY = threadIdx.y + 1;
+    // Globální index v jednorozměrném poli
+    int index = (y * width + x) * 3;
 
-    int idx = (y * width + x) * channels;
-    int sharedIdx = ((sharedY * (BLOCK_SIZE + 2)) + sharedX) * channels;
-
-    // Načtení pixelů do sdílené paměti
+    // Nahrání pixelu do sdílené paměti
     if (x < width && y < height) {
-        sharedMem[sharedIdx] = input[idx];
-        sharedMem[sharedIdx + 1] = input[idx + 1];
-        sharedMem[sharedIdx + 2] = input[idx + 2];
-
-        // Načtení sousedních pixelů na okrajích
-        if (threadIdx.x == 0 && x > 0) {
-            sharedMem[(sharedY * (BLOCK_SIZE + 2)) * channels] = input[idx - channels];
-        }
-        if (threadIdx.x == BLOCK_SIZE - 1 && x < width - 1) {
-            sharedMem[(sharedY * (BLOCK_SIZE + 2) + BLOCK_SIZE + 1) * channels] = input[idx + channels];
-        }
-        if (threadIdx.y == 0 && y > 0) {
-            sharedMem[(sharedX) * channels] = input[idx - width * channels];
-        }
-        if (threadIdx.y == BLOCK_SIZE - 1 && y < height - 1) {
-            sharedMem[((BLOCK_SIZE + 1) * (BLOCK_SIZE + 2) + sharedX) * channels] = input[idx + width * channels];
+        for (int c = 0; c < 3; c++) {
+            sharedBlock[threadIdx.y + 1][threadIdx.x + 1][c] = input[index + c];
         }
     }
+
+    // Nahrání okrajových pixelů do sdílené paměti
+    if (threadIdx.x == 0 && x > 0) { // Levý okraj
+        for (int c = 0; c < 3; c++) {
+            sharedBlock[threadIdx.y + 1][0][c] = input[index - 3 + c];
+        }
+    }
+    if (threadIdx.x == blockDim.x - 1 && x < width - 1) { // Pravý okraj
+        for (int c = 0; c < 3; c++) {
+            sharedBlock[threadIdx.y + 1][BLOCK_SIZE + 1][c] = input[index + 3 + c];
+        }
+    }
+    if (threadIdx.y == 0 && y > 0) { // Horní okraj
+        for (int c = 0; c < 3; c++) {
+            sharedBlock[0][threadIdx.x + 1][c] = input[index - width * 3 + c];
+        }
+    }
+    if (threadIdx.y == blockDim.y - 1 && y < height - 1) { // Spodní okraj
+        for (int c = 0; c < 3; c++) {
+            sharedBlock[BLOCK_SIZE + 1][threadIdx.x + 1][c] = input[index + width * 3 + c];
+        }
+    }
+
     __syncthreads();
 
-    // Konvoluce s 3x3 kernelem
+    // Aplikace průměrovacího filtru (konvoluce)
     if (x < width && y < height) {
-        float kernel[3][3] = {
-            {1 / 9.0f, 1 / 9.0f, 1 / 9.0f},
-            {1 / 9.0f, 1 / 9.0f, 1 / 9.0f},
-            {1 / 9.0f, 1 / 9.0f, 1 / 9.0f}};
-
-        for (int c = 0; c < channels; c++) {
-            float sum = 0.0f;
-            for (int ky = -1; ky <= 1; ky++) {
-                for (int kx = -1; kx <= 1; kx++) {
-                    int smemIdx = ((sharedY + ky) * (BLOCK_SIZE + 2) + (sharedX + kx)) * channels + c;
-                    sum += sharedMem[smemIdx] * kernel[ky + 1][kx + 1];
+        for (int c = 0; c < 3; c++) {
+            int sum = 0;
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    sum += sharedBlock[threadIdx.y + 1 + dy][threadIdx.x + 1 + dx][c];
                 }
             }
-            output[idx + c] = static_cast<unsigned char>(sum);
+            output[index + c] = sum / 9; // Průměr
         }
     }
 }
 
 /**
- * Hlavní funkce
+ * Host function that loads an image, applies the blur effect, and saves the result.
  */
-int main(int argc, char **argv) {
+int main() {
     std::string inputFileName = "../input.png";
     std::string outputFileName = "../output.png";
 
-    // Načtení obrázku
+    // Načtení vstupního obrázku
     png::image<png::rgb_pixel> inputImage(inputFileName);
     int width = inputImage.get_width();
     int height = inputImage.get_height();
-    int channels = 3;
+    size_t imageSize = width * height * 3 * sizeof(unsigned char);
 
-    unsigned char *h_input = new unsigned char[width * height * channels];
-    unsigned char *h_output = new unsigned char[width * height * channels];
+    unsigned char *h_input = new unsigned char[imageSize];
+    unsigned char *h_output = new unsigned char[imageSize];
 
+    // Převod obrázku na pole RGB
     pvg::pngToRgb(h_input, inputImage);
 
-    // Alokace paměti na GPU
+    // Alokace GPU paměti
     unsigned char *d_input, *d_output;
-    CUDA_CHECK_RETURN(cudaMalloc(&d_input, width * height * channels));
-    CUDA_CHECK_RETURN(cudaMalloc(&d_output, width * height * channels));
+    cudaMalloc(&d_input, imageSize);
+    cudaMalloc(&d_output, imageSize);
 
-    CUDA_CHECK_RETURN(cudaMemcpy(d_input, h_input, width * height * channels, cudaMemcpyHostToDevice));
+    // Kopírování dat na GPU
+    cudaMemcpy(d_input, h_input, imageSize, cudaMemcpyHostToDevice);
 
     // Konfigurace kernelu
     dim3 blockSize(BLOCK_SIZE, BLOCK_SIZE);
     dim3 gridSize((width + BLOCK_SIZE - 1) / BLOCK_SIZE, (height + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
-    double start = omp_get_wtime();
-    blurKernel<<<gridSize, blockSize>>>(d_input, d_output, width, height, channels);
-    CUDA_CHECK_RETURN(cudaDeviceSynchronize());
-    double end = omp_get_wtime();
+    // Spuštění kernelu
+    blurKernel<<<gridSize, blockSize>>>(d_input, d_output, width, height);
+    cudaDeviceSynchronize();
 
-    cudaMemcpy(h_output, d_output, width * height * channels, cudaMemcpyDeviceToHost);
+    // Kopírování výsledku zpět na CPU
+    cudaMemcpy(h_output, d_output, imageSize, cudaMemcpyDeviceToHost);
 
-    // Uložení obrázku
+    // Uložení výsledného obrázku
     png::image<png::rgb_pixel> outputImage(width, height);
     pvg::rgbToPng(outputImage, h_output);
     outputImage.write(outputFileName);
 
-    std::cout << "Rozostření dokončeno za " << end - start << " sekund." << std::endl;
-
     // Uvolnění paměti
     delete[] h_input;
     delete[] h_output;
-    CUDA_CHECK_RETURN(cudaFree(d_input));
-    CUDA_CHECK_RETURN(cudaFree(d_output));
+    cudaFree(d_input);
+    cudaFree(d_output);
 
+    std::cout << "Blurred image saved to " << outputFileName << std::endl;
     return 0;
 }
