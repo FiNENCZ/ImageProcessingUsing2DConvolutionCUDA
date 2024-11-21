@@ -110,7 +110,7 @@ int main() {
 
     // Uvolnění paměti
     delete[] h_input;
-    delete[] h_output;
+    delete[] h_output
     cudaFree(d_input);
     cudaFree(d_output);
 
