@@ -12,7 +12,7 @@ find_package(OpenMP REQUIRED)
 find_package(PNG REQUIRED)
 
 # Přidání exekutivního souboru
-add_executable(TEMPALTE main.cu pngio.cpp)
+add_executable(TEMPALTE main.cu utils/pngio.cpp)
 
 list(APPEND CMAKE_CXX_FLAGS "-O2 -ffast-math -Wall ${OpenMP_CXX_FLAGS}")
 list(APPEND CUDA_NVCC_FLAGS "--compiler-options -fno-strict-aliasing -lineinfo -use_fast_math --ptxas-options -dlcm=cg")
