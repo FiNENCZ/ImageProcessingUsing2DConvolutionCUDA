@@ -1,2 +1,0 @@
-# ImageProcessingUsing2DConvolutionCUDA
-dasds
