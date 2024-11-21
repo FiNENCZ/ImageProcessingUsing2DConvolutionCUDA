@@ -6,8 +6,8 @@
 #include <omp.h>
 #include "utils/pngio.h"
 
-#define BLOCK_SIZE (32u)
-#define FILTER_SIZE (19u)
+#define BLOCK_SIZE (16u)
+#define FILTER_SIZE (5u)
 #define TILE_SIZE (BLOCK_SIZE-(FILTER_SIZE-1))
 
 #define CUDA_CHECK_RETURN( value ) {							\
