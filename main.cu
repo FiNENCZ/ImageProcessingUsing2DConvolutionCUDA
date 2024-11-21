@@ -30,102 +30,70 @@
 				cudaGetErrorString(err), __LINE__, __FILE__ );	\
 		exit( 1 );												\
 	} }
-	
-__host__ __device__ void calcMandelbrotPixel( unsigned char *img, unsigned int x, unsigned int y )
+
+double h_diag_len = 0.0;
+/* Variable in constant GPU memory */
+__constant__ double d_diag_len;
+
+__global__ void createImg( unsigned char * img )
 {
-	double x0, y0, xb, yb, xtmp;
-	unsigned int i, iter;
+	unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 	
 	if( x < WIDTH && y < HEIGHT ) {
-		i = ( x + y * WIDTH ) * 3;
+		unsigned int i = (y * WIDTH + x) * 3;
 		
-		x0 = ( (double)x / WIDTH * 3.5 ) - 2.5;
-		y0 = ( (double)y / HEIGHT * 2 ) - 1;
-
-		xb = 0;
-		yb = 0;
-
-		iter = 0;
-
-		while( xb*xb + yb*yb < 4 && iter < MAX_ITER ) {
-			xtmp = xb*xb - yb*yb + x0;
-			yb = 2*xb*yb + y0;
-
-			xb = xtmp;
-			iter++;
-		}
-				
-		iter*=20;
-		
-		img[ i ] = iter > 510 ? ( iter - 510 ) % 255 : 0;
-		img[ i + 1 ] = iter > 255 ? ( iter - 255 ) % 255 : 0;
-		img[ i + 2 ] = iter % 255;
+		img[ i ] = float(x) / WIDTH * 255;
+		img[ i + 1 ] = float(y) / HEIGHT * 255;
+		img[ i + 2 ] = sqrtf( powf(x, 2) + powf(y, 2) ) / d_diag_len * 255;
 	}
-}
-
-__global__ void createImgGPU( unsigned char *img )
-{
-	unsigned int x = blockDim.x * blockIdx.x + threadIdx.x;
-	unsigned int y = blockDim.y * blockIdx.y + threadIdx.y;
-	
-	calcMandelbrotPixel( img, x, y );
-}
-
-void createImgCPU( unsigned char *img )
-{
-	for( unsigned int y = 0; y < HEIGHT; ++y )
-		for( unsigned x = 0; x < WIDTH; ++x )
-			calcMandelbrotPixel( img, x, y );
 }
 
 /**
  * Host function that prepares data array and passes it to the CUDA kernel.
  */
 int main(int argc, char **argv) {
-	std::cout << "Processing image..." << std::endl;
+	std::cout << "Creating image, please wait..." << std::endl;
 	
-	png::image<png::rgb_pixel> img( WIDTH, HEIGHT );
+	int size = WIDTH * HEIGHT * 3 * sizeof( unsigned char );
+	h_diag_len = sqrtf( powf( WIDTH, 2) + powf( HEIGHT, 2) );
 	
-	int size = WIDTH * 3 * HEIGHT * sizeof(unsigned char);
+	/* Initialize constant variable in device memory */
+	CUDA_CHECK_RETURN( cudaMemcpyToSymbol( d_diag_len, &h_diag_len, sizeof(double) ) );
 	
-	/* Allocate image buffer on the host memory */
-	unsigned char *h_img = new unsigned char[ size ];
+	/* Allocated memory buffer in host memory */
+	unsigned char * h_img = new unsigned char[ size ];
 	
-	/* Allocate image buffre on GPGPU */
-	unsigned char *d_img = NULL;
+	/* Allocate memory buffer in device memory */
+	unsigned char * d_img;
 	CUDA_CHECK_RETURN( cudaMalloc( &d_img, size ) );
 	
-	/* Configure image kernel */
-	dim3 grid_size( (WIDTH + BLOCK_SIZE - 1) / BLOCK_SIZE,
-					(HEIGHT + BLOCK_SIZE - 1) / BLOCK_SIZE );
-					
-	dim3 block_size( BLOCK_SIZE, BLOCK_SIZE );
+	/* Kernel configuration */
+	dim3 blockSize( BLOCK_SIZE, BLOCK_SIZE );
+	dim3 gridSize( (WIDTH + BLOCK_SIZE - 1) / BLOCK_SIZE,
+				   (HEIGHT + BLOCK_SIZE - 1) / BLOCK_SIZE );
 	
-	#if USE_GPU
-	
+	/* Run kernel */
 	double start = omp_get_wtime();
-	createImgGPU<<< grid_size, block_size >>>( d_img );
+	createImg<<<gridSize, blockSize>>>( d_img );
 	CUDA_CHECK_RETURN( cudaDeviceSynchronize() );
 	double end = omp_get_wtime();
 	
+	/* Copy device memory buffer to the host memory */
 	CUDA_CHECK_RETURN( cudaMemcpy( h_img, d_img, size, cudaMemcpyDeviceToHost ) );
 	
-	#else
-	
-	double start = omp_get_wtime();
-	createImgCPU( h_img );
-	double end = omp_get_wtime();
-	
-	#endif //USE_GPU
-	
+	/* Create PNG image */
+	png::image<png::rgb_pixel> img( WIDTH, HEIGHT );
 	pvg::rgbToPng( img, h_img );
+	
+	/* Write the image to disk */
+	img.write( "../output.png" );
 	
 	std::cout << "Done in " << end - start << " seconds." << std::endl;
 	
-	img.write("../output.png");
-	
-	CUDA_CHECK_RETURN( cudaFree( d_img ) );
+	/* Free memory */
 	delete [] h_img;
+	CUDA_CHECK_RETURN( cudaFree( d_img ) );
 	
 	return 0;
 }
